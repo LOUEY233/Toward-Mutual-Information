@@ -1,0 +1,17 @@
+python train.py \
+--batch_size 12 \
+--epoch 30 \
+--predLambda 1e3 \
+--data_dir './Dataset/Patch192' \
+--lr 1e-4 \
+--decay 1e-5 \
+--save_dir './save/save_train_param_num' \
+--save_test_dir './save/save_test_label_num' \
+--test_dir ['./Dataset/Patch192/LGE/LGE_Test/','./Dataset/Patch192/LGE/LGE_Vali/'] \
+--kernel 4 \
+--global_weight 0.5 \
+--local_weight 1.0 \
+--prior_weight 0.1 \
+--needMI True \
+--gpu '0' \
+--num_worker 10
