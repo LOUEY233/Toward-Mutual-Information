@@ -203,10 +203,18 @@ class Get_distance_loss():
         new_mu_b1,new_mu_b2,new_mu_b3 = new_mu_b.chunk(3,0)
         new_logvar_b1,new_logvar_b2,new_logvar_b3 = new_logvar_b.chunk(3,0)
         loss1 = self.gaussian_distance(new_mu_a1,new_logvar_a1,new_mu_b1,new_logvar_b1)
-        loss2 = self.gaussian_distance(new_mu_a2,new_logvar_a2,new_mu_b2,new_logvar_b2)
-        loss3 = self.gaussian_distance(new_mu_a3,new_logvar_a3,new_mu_b3,new_logvar_b3)
+        loss1_ = self.gaussian_distance(new_mu_a1,new_logvar_a1,new_mu_b2,new_logvar_b2)
+        loss1_1 = self.gaussian_distance(new_mu_a1,new_logvar_a1,new_mu_b3,new_logvar_b3)
 
-        return loss1+loss2+loss3
+        loss2 = self.gaussian_distance(new_mu_a2,new_logvar_a2,new_mu_b1,new_logvar_b1)
+        loss2_ = self.gaussian_distance(new_mu_a2,new_logvar_a2,new_mu_b2,new_logvar_b2)
+        loss2_1 = self.gaussian_distance(new_mu_a2,new_logvar_a2,new_mu_b3,new_logvar_b3)
+
+        loss3 = self.gaussian_distance(new_mu_a3,new_logvar_a3,new_mu_b3,new_logvar_b3)
+        loss3_ = self.gaussian_distance(new_mu_a3,new_logvar_a3,new_mu_b1,new_logvar_b1)
+        loss3_1 = self.gaussian_distance(new_mu_a3,new_logvar_a3,new_mu_b2,new_logvar_b2)
+
+        return loss1+loss1_+loss1_1+loss2+loss2_+loss2_1+loss3+loss3_+loss3_1
 
 
 class Contrastive_loss():
@@ -249,28 +257,46 @@ class Gaussian_Distance(nn.Module):
         var_b1 = var_b.view(var_b.size(0),1,-1)
         var_b2 = var_b.view(1,var_b.size(0),-1)
 
-        vaa = torch.sum(torch.div(torch.exp(torch.mul(torch.div(torch.pow(mu_a1-mu_a2,2),var_a1+var_a2),-0.5)),torch.sqrt(var_a1+var_a2)))
-        vab = torch.sum(torch.div(torch.exp(torch.mul(torch.div(torch.pow(mu_a1-mu_b2,2),var_a1+var_b2),-0.5)),torch.sqrt(var_a1+var_b2)))
-        vbb = torch.sum(torch.div(torch.exp(torch.mul(torch.div(torch.pow(mu_b1-mu_b2,2),var_b1+var_b2),-0.5)),torch.sqrt(var_b1+var_b2)))
+        # vaa = torch.sum(torch.div(torch.exp(torch.mul(torch.div(torch.pow(mu_a1-mu_a2,2),var_a1+var_a2),-0.5)),torch.sqrt(var_a1+var_a2)))
+        # vab = torch.sum(torch.div(torch.exp(torch.mul(torch.div(torch.pow(mu_a1-mu_b2,2),var_a1+var_b2),-0.5)),torch.sqrt(var_a1+var_b2)))
+        # vbb = torch.sum(torch.div(torch.exp(torch.mul(torch.div(torch.pow(mu_b1-mu_b2,2),var_b1+var_b2),-0.5)),torch.sqrt(var_b1+var_b2)))
 
+        vaa = torch.sum(torch.exp(torch.mul(torch.add(torch.div(torch.pow(mu_a1 - mu_a2, 2), var_a1 + var_a2),torch.log(var_a1+var_a2)),-0.5)))
+        vab = torch.sum(torch.exp(torch.mul(torch.add(torch.div(torch.pow(mu_a1 - mu_b2, 2), var_a1 + var_b2),torch.log(var_a1+var_b2)),-0.5)))
+        vbb = torch.sum(torch.exp(torch.mul(torch.add(torch.div(torch.pow(mu_b1 - mu_b2, 2), var_b1 + var_b2),torch.log(var_b1+var_b2)),-0.5)))
+
+        # loss = (vaa+vbb-torch.mul(vab,2.0))*(2*3.14159265)**(-4)*2
         loss = vaa+vbb-torch.mul(vab,2.0)
 
         return loss
 
 if __name__ == '__main__':
-    net = Get_distance_loss(4)
+    # net = Get_distance_loss(4)
     mu_a = torch.randn((12,256,40,40))
     mu_b = torch.randn((12,256,40,40))
     logvar_a = torch.randn((12,256,40,40))
     logvar_b = torch.randn((12,256,40,40))
-    loss = net.get_loss(mu_a,logvar_a,mu_b,logvar_b)
+    # loss = net.get_loss(mu_a,logvar_a,mu_b,logvar_b)
+    # print(loss)
     net2 = Gaussian_Distance(4)
     loss2 = net2(mu_a,logvar_a,mu_b,logvar_b)
-    net3 = Contrastive_loss(4)
-    loss3 = net3.get_loss(mu_a,logvar_a,mu_b,logvar_b) + net3.gaussian_distance(mu_a,logvar_a,mu_b,logvar_b)
-    print(loss)
     print(loss2)
-    print(loss3)
+
+    # a = torch.randn((2,4,4,4))
+    # b = torch.randn((2,4,4,4))
+    # c = torch.sum(a,dim=0)
+    # print(c.size())
+    # a = torch.randn((3,2,2))
+    # b = a.view(a.size(0),1,-1)
+    # b_ = a.view(1,a.size(0),-1)
+    # print(b,b_)
+    # loss = 0
+    # for i in range(len(mu_a)):
+    #     # print(mu_a[i].unsqueeze(0).size())
+    #     mu_a_ = mu_a[i].unsqueeze(0)
+    #     logvar_a_ = logvar_a[i].unsqueeze(0)
+    #     loss += net2(mu_a_,logvar_a_,mu_b,logvar_b)
+    # print(loss)
     # a = torch.randn((3,1,6,6))
     # a1,a2,a3 = torch.chunk(a,3,dim=0)
     # print(a1)

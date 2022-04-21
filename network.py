@@ -201,11 +201,11 @@ class VAE(nn.Module):
         feat_down4,down4_mu,down4_logvar = self.bottleneckdown4(deout2,gate) # z mu var (256)
         segout_down4 = self.segdown4_seq(feat_down4)  # z(256)->4
         pred_down4 = self.soft(segout_down4)  # 4 -> 4 (softmax)
-        deout3 = self.deconv_seq3(torch.cat((self.convt3(feat_down4),self.convt3(deout2)),1)) # (128+128)->128
+        deout3 = self.deconv_seq3(torch.cat((self.convt3(feat_down4),out2),1)) # (128+128)->128
         feat_down2,down2_mu,down2_logvar = self.bottleneckdown2(deout3,gate)  #z mu var (128)
         segout_down2 = self.segdown2_seq(feat_down2)  # z(128) -> 4
         pred_down2 = self.soft(segout_down2) # 4 -> 4 (softmax)
-        deout4 = self.deconv_seq4(torch.cat((self.convt4(feat_down2),self.convt4(deout3)),1)) # (64+64) -> 64
+        deout4 = self.deconv_seq4(torch.cat((self.convt4(feat_down2),out1),1)) # (64+64) -> 64
         z, mu, logvar = self.bottleneck(deout4,gate) #z mu var (64)
         return z, mu, logvar,pred_down2,segout_down2,feat_down2,down2_mu,down2_logvar,pred_down4,segout_down4,feat_down4,down4_mu,down4_logvar,out5
 

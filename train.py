@@ -1,19 +1,9 @@
 import os
-
-# from torch.optim.lr_scheduler import MultiStepLR
-
-from MINE import *
-
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
-import torch
-from torch import nn
-import torch.nn.functional as F
 from torch.backends import cudnn
 from test import SegNet_test_mr
 from torch.utils.data import Dataset, DataLoader
-from config import *
-import os
-from network_wo_A import *
+from network2 import *
 from loss_function import *
 from dataload import *
 from MINE2 import *
@@ -41,12 +31,12 @@ def ADA_Train(source_MINE,target_MINE,Train_LoaderA,Train_LoaderB,encoder,decode
         ct= ct.cuda()
         ct_down2= ct_down2.cuda()
         ct_down4= ct_down4.cuda()
-        info_ct = info_ct.cuda()
+        # info_ct = info_ct.cuda()
 
         mr= mr.cuda()
         mr_down4= mr_down4.cuda()
         mr_down2= mr_down2.cuda()
-        info_mr = info_mr.cuda()
+        # info_mr = info_mr.cuda()
 
         label= label.cuda()
         label_onehot =torch.FloatTensor(label.size(0), 4,label.size(1),label.size(2)).cuda()
@@ -64,10 +54,10 @@ def ADA_Train(source_MINE,target_MINE,Train_LoaderA,Train_LoaderB,encoder,decode
         label_down4_onehot.scatter_(1, label_down4.unsqueeze(dim=1), 1)
 
         fusionseg,pred_ct, out_ct,feat_ct, mu_ct,logvar_ct, pred_down2_ct, outdown2_ct,featdown2_ct, mudown2_ct,logvardown2_ct,pred_down4_ct, outdown4_ct,featdown4_ct, mudown4_ct,logvardown4_ct,info_pred_ct,deout2_ct,deout3_ct,deout4_ct= encoder(ct,gate)
-        #info_pred_ct = Infonet(info_pred_ct)
+        # info_pred_ct = Infonet(info_pred_ct)
 
-        info_cri = nn.CrossEntropyLoss().cuda()
-        #infoloss_ct = info_cri(info_pred_ct,info_ct)
+        # info_cri = nn.CrossEntropyLoss().cuda()
+        # infoloss_ct = info_cri(info_pred_ct,info_ct)
 
         seg_criterian = BalancedBCELoss(label)   # 4
         seg_criterian = seg_criterian.cuda()
@@ -95,9 +85,9 @@ def ADA_Train(source_MINE,target_MINE,Train_LoaderA,Train_LoaderB,encoder,decode
         KLD_down4_ct = -0.5 * torch.mean(1 + logvardown4_ct - mudown4_ct.pow(2) - logvardown4_ct.exp())
 
         _,pred_mr,out_mr,feat_mr, mu_mr,logvar_mr, preddown2_mr, seg_outdown4_mr,featdown2_mr, mudown2_mr,logvardown2_mr,preddown4_mr, seg_outdown2_mr,featdown4_mr, mudown4_mr,logvardown4_mr,info_pred_mr,deout2_mr,deout3_mr,deout4_mr= encoder(mr,gate)
-        #info_pred_mr = Infonet(info_pred_mr)
+        # info_pred_mr = Infonet(info_pred_mr)
 
-        #infoloss_mr = info_cri(info_pred_mr,info_mr)
+        # infoloss_mr = info_cri(info_pred_mr,info_mr)
 
         recon_mr=decoderB(feat_mr,pred_mr)
         BCE_mr = F.binary_cross_entropy(recon_mr, mr)
@@ -115,9 +105,6 @@ def ADA_Train(source_MINE,target_MINE,Train_LoaderA,Train_LoaderB,encoder,decode
         distance_down2_loss = DistanceNet(mudown2_ct,logvardown2_ct,mudown2_mr,logvardown2_mr)
         distance_down4_loss = DistanceNet(mudown4_ct,logvardown4_ct,mudown4_mr,logvardown4_mr)
 
-        # MI_loss
-        # print(seg_outdown4_mr.size(), seg_outdown2_mr.size(), out_mr.size())
-        # print(recondown4_mr.size(), recondown2_mr.size(), recon_mr.size())
         if args.needMI:
             loss_target = target_MINE(seg_outdown2_mr, seg_outdown4_mr, out_mr, recondown4_mr, recondown2_ct,
                                       recon_mr).cuda()
@@ -130,48 +117,13 @@ def ADA_Train(source_MINE,target_MINE,Train_LoaderA,Train_LoaderB,encoder,decode
                         10.0*BCE_down4_ct + torch.mul(KLD_down4_ct, kldlamda) + 10.0*BCE_down4_mr + torch.mul(KLD_down4_mr, kldlamda) + torch.mul(distance_down4_loss, dislamdadown4) + predlamda * segdown4loss_output
         if args.needMI:
             balanced_loss += args.miLambda*(loss_target+loss_source)
-        # balanced_loss = BCE_mr + torch.mul(KLD_mr, kldlamda) + BCE_ct + torch.mul(KLD_ct,kldlamda) + 0.01*torch.mul(distance_loss, dislamda)\
-        #                 + 0.001*predlamda * (segloss_output + fusionsegloss_output) + \
-        #                 BCE_down2_ct + torch.mul(KLD_down2_ct, kldlamda) + BCE_down2_mr + torch.mul(
-        #     KLD_down2_mr, kldlamda) + 0.01*torch.mul(distance_down2_loss, dislamdadown2) + 0.001*predlamda * segdown2loss_output + \
-        #                 BCE_down4_ct + torch.mul(KLD_down4_ct, kldlamda) +  BCE_down4_mr + torch.mul(
-        #     KLD_down4_mr, kldlamda) + 0.01*torch.mul(distance_down4_loss, dislamdadown4) + 0.001*predlamda * segdown4loss_output + \
-        #                 1.0 * (loss_source+loss_target)
         if args.needMI:
             optim_loss.zero_grad()
         optim.zero_grad()
         balanced_loss.backward()
-        # networks = [encoder, decoderA, decoderAdown2, decoderAdown4, decoderB, decoderBdown2, decoderBdown4,
-        # source_MINE,target_MINE]
-        # for item in networks:
-        #     nn.utils.clip_grad_norm_(item.parameters(), max_norm=4, norm_type=2)
         if args.needMI:
             optim_loss.step()
         optim.step()
-        if i % 20 == 0:
-            print(epoch,i,lr)
-            print("total_loss:",balanced_loss)
-            print("BCE_mr",BCE_mr)
-            print("torch.mul(KLD_mr,kldlamda)",0.01*torch.mul(distance_loss, dislamda))
-            print("BCE_ct",BCE_ct)
-            print("torch.mul(KLD_ct,kldlamda)",torch.mul(KLD_ct,kldlamda))
-            print("torch.mul(distance_loss,dislamda)",0.01*torch.mul(distance_loss, dislamda))
-            print("predlamda*(segloss_output+fusionsegloss_output)",0.001*predlamda * (segloss_output + fusionsegloss_output))
-            print("10.0*BCE_down2_ct",BCE_down2_ct)
-            print("torch.mul(KLD_down2_ct, kldlamda)",torch.mul(KLD_down2_ct, kldlamda))
-            print("10.0*BCE_down2_mr",BCE_down2_mr)
-            print("torch.mul(KLD_down2_mr, kldlamda)",torch.mul(KLD_down2_mr, kldlamda))
-            print("torch.mul(distance_down2_loss, dislamdadown2)",0.01*torch.mul(distance_down2_loss, dislamdadown2))
-            print("predlamda * segdown2loss_output",0.001*predlamda * segdown2loss_output)
-            print("10.0*BCE_down4_ct",BCE_down4_ct)
-            print("torch.mul(KLD_down4_ct, kldlamda)",torch.mul(KLD_down4_ct, kldlamda))
-            print("10.0*BCE_down4_mr + torch.mul(KLD_down4_mr, kldlamda)",BCE_down4_mr + torch.mul(KLD_down4_mr, kldlamda))
-            print("torch.mul(distance_down4_loss, dislamdadown4)",0.01*torch.mul(distance_down4_loss, dislamdadown4))
-            print("predlamda * segdown4loss_output",0.001*predlamda * segdown4loss_output)
-            if args.needMI:
-                print("1.0*(loss1+loss2+loss3)",100.0*(loss_target+loss_source))
-            # print('epoch %d , %d th iter; seglr,ADA_totalloss,segloss,distance_loss1,distance_loss2: %.6f %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f'\
-            #       % (epoch, i,lr, balanced_loss.item(),BCE_mr.item(),KLD_mr.item(),BCE_ct.item(),KLD_ct.item(),fusionsegloss_output.item(),segloss_output.item(),segdown2loss_output.item(),segdown4loss_output.item(),distance_loss.item(),distance_down2_loss.item(),distance_down4_loss.item(),loss1.item(),loss2.item(),loss3.item()))
 
         i=i+1
 
@@ -222,7 +174,7 @@ def main(args):
         target_down4_vaedecoder = VAEDecode_down4()
         target_down4_vaedecoder = target_down4_vaedecoder.cuda()
 
-        #Infonet = InfoNet().cuda()
+        # Infonet = InfoNet().cuda()
 
         if args.needMI:
         # MI_estimation
@@ -347,7 +299,6 @@ if __name__ == '__main__':
     parser.add_argument('--gpu',default='0',type=str,help='gpu_number') #
     parser.add_argument('--num_worker',default=10,type=int) #
     parser.add_argument('--miLambda',default=100,type=float,help='mutual information loss')
-    parser.add_argument("--milestone", type=int, default=[5, 10, 15], help="When to decay learning rate")
 
     args = parser.parse_args()
     main(args)
