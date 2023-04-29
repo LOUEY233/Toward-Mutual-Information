@@ -24,10 +24,10 @@ Please refer to [UDA-VAE](https://github.com/FupingWu90/VarDA/tree/main/Dataset)
 # Model Arch
 
 ## Main workflow
-![workflow](/repo/UDA-VAE2.pdf)
+![workflow](/repo/UDA-VAE2.PNG)
 
 ## Mutual Information Maximization
-![mim](/repo/MINE2.pdf)
+![mim](/repo/MINE2.PNG)
 
 # Training
 Run the following script in terminal
