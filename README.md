@@ -27,7 +27,7 @@ Please refer to [UDA-VAE](https://github.com/FupingWu90/VarDA/tree/main/Dataset)
 ![workflow](https://github.com/LOUEY233/Toward-Mutual-Information/blob/main/repo/UDA-VAE2.png)
 
 ## Mutual Information Maximization
-![mim](https://github.com/LOUEY233/Toward-Mutual-Information/blob/main/repo/MINE2.PNG)
+![mim](https://github.com/LOUEY233/Toward-Mutual-Information/blob/main/repo/MINE2.png)
 
 # Training
 Run the following script in terminal
