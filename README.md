@@ -4,10 +4,10 @@ of the paper: \
 "Unsupervised Domain Adaptation for Cardiac Segmentation: Towards Structure Mutual Information Maximization" (accepted by CVPRW 2022)
 
 ## Updates:
-- 2023.5.31: Fix some description errors and typos in arxiv.
+
 - 2022.4.21: Paper is available at [https://arxiv.org/abs/2204.09334](https://arxiv.org/abs/2204.09334)
 - 2022.4.21: Upload the code
-- 2022.6.19: CVF Open Access [Link](https://openaccess.thecvf.com/content/CVPR2022W/Precognition/html/Lu_Unsupervised_Domain_Adaptation_for_Cardiac_Segmentation_Towards_Structure_Mutual_Information_CVPRW_2022_paper.html)
+- 2023.5.31: Fix some description errors and typos in arxiv.
 
 ## Prerequisites
 * Windows or Linux (tested on CentOS)
