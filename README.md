@@ -31,7 +31,7 @@ Please refer to [UDA-VAE](https://github.com/FupingWu90/VarDA/tree/main/Dataset)
 ![mim](https://github.com/LOUEY233/Toward-Mutual-Information/blob/main/repo/MINE2.png)
 
 # Training
-Run the following script in terminal
+Run the following script in the terminal
 ```
 python train.py
 ```
@@ -78,12 +78,10 @@ If you find this repo useful, please cite our paper:
 ```
 
 # Contact
-Please reach lucha@kean.edu for further questions.\
-You can also open an issue (prefered) or a pull request in this Github repository.\
-I am willing to answer your question
+Please reach lucha@kean.edu for further questions.
 
 # Acknowledgement
-Some parts of the repository is borrowed from [UDA-VAE](https://github.com/FupingWu90/VarDA). Thanks for sharing!
+Some parts of the repository are borrowed from [UDA-VAE](https://github.com/FupingWu90/VarDA). Thanks for sharing!
 
 # TODO List
 - [x] List (important) hyperparameters
